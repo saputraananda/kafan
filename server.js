@@ -6,11 +6,11 @@ import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-import authRoutes from './api/routes/auth.routes.js';
-import barangRoutes from './api/routes/barang.routes.js';
-import keuanganRoutes from './api/routes/keuangan.routes.js';
-import transaksiRoutes from './api/routes/transaksi.routes.js';
-import hargaRoutes from './api/routes/harga.routes.js';
+import authRoutes from './backend/routes/auth.routes.js';
+import barangRoutes from './backend/routes/barang.routes.js';
+import keuanganRoutes from './backend/routes/keuangan.routes.js';
+import transaksiRoutes from './backend/routes/transaksi.routes.js';
+import hargaRoutes from './backend/routes/harga.routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
