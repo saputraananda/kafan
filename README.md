@@ -1,6 +1,6 @@
 # 🚑 Ambulance Pondok Bambu
 
-Aplikasi manajemen layanan ambulans untuk **PT Waschen Alora Indonesia** — mengelola transaksi perjalanan, daftar harga, stok barang (kain kafan), dan pencatatan keuangan.
+Aplikasi manajemen layanan ambulans untuk mengelola transaksi perjalanan, daftar harga, stok barang (kain kafan), dan pencatatan keuangan.
 
 ---
 
@@ -153,4 +153,4 @@ After running the seed migration, login with:
 
 ## 📄 License
 
-Private — PT Waschen Alora Indonesia
+Private — Putra
