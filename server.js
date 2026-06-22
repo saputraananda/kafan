@@ -22,20 +22,19 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/barang', barangRoutes);
 app.use('/api/keuangan', keuanganRoutes);
 app.use('/api/transaksi', transaksiRoutes);
 app.use('/api/harga', hargaRoutes);
 
-// Serve static frontend in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-  });
-}
+// Serve static frontend + SPA fallback (production & Vercel)
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 // Error handler
 app.use((err, req, res, next) => {

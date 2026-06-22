@@ -14,11 +14,11 @@ export default function BarangPage() {
   const [loadingPakai, setLoadingPakai] = useState(false);
 
   const [qStok, setQStok] = useState('');
-  const [pageSizeStok, setPageSizeStok] = useState(10);
+  const [pageSizeStok, setPageSizeStok] = useState(-1);
   const [pageStok, setPageStok] = useState(1);
 
   const [qPakai, setQPakai] = useState('');
-  const [pageSizePakai, setPageSizePakai] = useState(10);
+  const [pageSizePakai, setPageSizePakai] = useState(-1);
   const [pagePakai, setPagePakai] = useState(1);
 
   const [showBarang, setShowBarang] = useState(false);
@@ -60,10 +60,11 @@ export default function BarangPage() {
     );
   }, [barangList, qStok]);
 
-  const stokTotalPages = Math.max(1, Math.ceil(filteredBarang.length / Number(pageSizeStok || 10)));
+  const sizeStok = pageSizeStok < 0 ? filteredBarang.length : pageSizeStok;
+  const stokTotalPages = Math.max(1, Math.ceil(filteredBarang.length / sizeStok));
   const stokPage = Math.min(pageStok, stokTotalPages);
-  const stokStart = (stokPage - 1) * Number(pageSizeStok || 10);
-  const pagedBarang = filteredBarang.slice(stokStart, stokStart + Number(pageSizeStok || 10));
+  const stokStart = (stokPage - 1) * sizeStok;
+  const pagedBarang = filteredBarang.slice(stokStart, stokStart + sizeStok);
 
   useEffect(() => { setPageStok(1); }, [qStok, pageSizeStok]);
 
@@ -77,10 +78,11 @@ export default function BarangPage() {
     );
   }, [pemakaian, qPakai]);
 
-  const pakaiTotalPages = Math.max(1, Math.ceil(filteredPakai.length / Number(pageSizePakai || 10)));
+  const sizePakai = pageSizePakai < 0 ? filteredPakai.length : pageSizePakai;
+  const pakaiTotalPages = Math.max(1, Math.ceil(filteredPakai.length / sizePakai));
   const pakaiPage = Math.min(pagePakai, pakaiTotalPages);
-  const pakaiStart = (pakaiPage - 1) * Number(pageSizePakai || 10);
-  const pagedPakai = filteredPakai.slice(pakaiStart, pakaiStart + Number(pageSizePakai || 10));
+  const pakaiStart = (pakaiPage - 1) * sizePakai;
+  const pagedPakai = filteredPakai.slice(pakaiStart, pakaiStart + sizePakai);
 
   useEffect(() => { setPagePakai(1); }, [qPakai, pageSizePakai]);
 
@@ -159,7 +161,7 @@ export default function BarangPage() {
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span>Show</span>
             <select className="select w-24" value={pageSizeStok} onChange={e => setPageSizeStok(Number(e.target.value))}>
-              {[5, 10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
+              {[{label:'ALL',value:-1},{label:'5',value:5},{label:'10',value:10},{label:'25',value:25},{label:'50',value:50}].map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
             </select>
             <span>entries</span>
           </div>
@@ -196,7 +198,7 @@ export default function BarangPage() {
         </div>
         <div className="px-5 py-3 flex items-center justify-between text-xs text-slate-500 bg-slate-50 border-t border-slate-100">
           <span>
-            Showing {filteredBarang.length === 0 ? 0 : stokStart + 1} to {Math.min(stokStart + Number(pageSizeStok || 10), filteredBarang.length)} of {filteredBarang.length} entries
+            Showing {filteredBarang.length === 0 ? 0 : stokStart + 1} to {Math.min(stokStart + sizeStok, filteredBarang.length)} of {filteredBarang.length} entries
           </span>
           <div className="flex items-center gap-2">
             <button className="btn btn-secondary btn-sm" disabled={stokPage <= 1} onClick={() => setPageStok(p => Math.max(1, p - 1))}>Prev</button>
@@ -213,7 +215,7 @@ export default function BarangPage() {
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span>Show</span>
             <select className="select w-24" value={pageSizePakai} onChange={e => setPageSizePakai(Number(e.target.value))}>
-              {[5, 10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
+              {[{label:'ALL',value:-1},{label:'5',value:5},{label:'10',value:10},{label:'25',value:25},{label:'50',value:50}].map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
             </select>
             <span>entries</span>
           </div>
@@ -245,7 +247,7 @@ export default function BarangPage() {
         </div>
         <div className="px-5 py-3 flex items-center justify-between text-xs text-slate-500 bg-slate-50 border-t border-slate-100">
           <span>
-            Showing {filteredPakai.length === 0 ? 0 : pakaiStart + 1} to {Math.min(pakaiStart + Number(pageSizePakai || 10), filteredPakai.length)} of {filteredPakai.length} entries
+            Showing {filteredPakai.length === 0 ? 0 : pakaiStart + 1} to {Math.min(pakaiStart + sizePakai, filteredPakai.length)} of {filteredPakai.length} entries
           </span>
           <div className="flex items-center gap-2">
             <button className="btn btn-secondary btn-sm" disabled={pakaiPage <= 1} onClick={() => setPagePakai(p => Math.max(1, p - 1))}>Prev</button>
