@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import api from '../utils/api';
 import { rupiah } from '../utils/helpers';
 import Swal from 'sweetalert2';
-import { Plus, Pen, Trash2, Search, ChevronDown, ChevronUp, Tags, X, MapPin, Building2, FileText, DollarSign, ClipboardList } from 'lucide-react';
+import { Plus, Pen, Trash2, Search, ChevronDown, ChevronUp, Tags, MapPin, Building2, FileText, DollarSign, ClipboardList } from 'lucide-react';
+import Modal from '../components/Modal';
+import Field from '../components/Field';
 
 const WILAYAH_COLORS = {
   'Tarif Ke Bandara': '#0ea5e9', 'Jakarta & Sekitarnya': '#8b5cf6', 'Jawa Barat': '#10b981',
@@ -64,54 +65,7 @@ export default function HargaPage() {
     } catch { el.checked = !prev; Swal.fire({ icon: 'error', text: 'Gagal toggle status', confirmButtonColor: '#10b981' }); }
   };
 
-  /* ── reusable form field with icon badge ── */
-  const Field = ({ icon: Ic, label, required, children }) => (
-    <div>
-      <label className="label">{label}{required && <span className="text-red-400 ml-0.5">*</span>}</label>
-      <div className="relative flex items-center">
-        {Ic && (
-          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-500 pointer-events-none z-10">
-            <Ic size={15} />
-          </span>
-        )}
-        {children}
-      </div>
-    </div>
-  );
 
-  /* ── modal shell ── */
-  const Modal = ({ open, onClose, children, size = 'md', icon: Icon, iconColor = 'emerald' }) => {
-    const sizeClass = size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md';
-    const badgeColor = { emerald: 'bg-emerald-100 text-emerald-600 ring-emerald-200', orange: 'bg-orange-100 text-orange-600 ring-orange-200', blue: 'bg-blue-100 text-blue-600 ring-blue-200' };
-    if (!open) return null;
-    return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-        <div className="absolute inset-0 bg-black/40" />
-        <div className={`relative bg-white rounded-2xl shadow-2xl shadow-slate-900/10 w-full ${sizeClass} overflow-hidden max-h-[85vh] flex flex-col animate-slide-up ring-1 ring-slate-200/50`}
-             onClick={e => e.stopPropagation()}>
-          <div className="px-6 py-4 flex items-center gap-3 border-b border-slate-100">
-            {Icon && (
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ring-1 ${badgeColor[iconColor] || badgeColor.emerald}`}>
-                <Icon size={16} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold text-slate-900">{children[0]}</h3>
-              {children[3] && <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{children[3]}</p>}
-            </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-              <X size={14} />
-            </button>
-          </div>
-          <div className="px-6 py-5 overflow-y-auto flex-1">{children[1]}</div>
-          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
-            {children[2]}
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  };
 
   const filteredGrouped = data?.grouped
     ? Object.entries(data.grouped).filter(([wil]) => !filterWil || wil === filterWil)
