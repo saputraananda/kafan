@@ -15,6 +15,13 @@ const WILAYAH_ICONS = {
   'Banten': '🗺️', 'Jawa Tengah': '🧭', 'Jawa Timur & Madura': '⚓', 'DIY Jogjakarta': '🏛️',
 };
 
+const formatRupiahInput = (value) => {
+  if (value === null || value === undefined) return '';
+  const clean = String(value).replace(/\D/g, '');
+  if (!clean) return '';
+  return Number(clean).toLocaleString('id-ID');
+};
+
 export default function HargaPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +31,7 @@ export default function HargaPage() {
   const [expanded, setExpanded] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ tipe_harga: 'Baru', wilayah: '', wilayah_custom: '', kota_tujuan: '', kota_asal: 'Tangerang', nama_layanan: '', harga: 0, status: 'Aktif', keterangan: '' });
+  const [form, setForm] = useState({ tipe_harga: 'Baru', wilayah: '', wilayah_custom: '', kota_tujuan: '', kota_asal: 'Jakarta', nama_layanan: '', harga: '', status: 'Aktif', keterangan: '' });
   const [wilayahCustom, setWilayahCustom] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -42,7 +49,8 @@ export default function HargaPage() {
   const getWilayahVal = () => form.wilayah === '__custom__' ? form.wilayah_custom : form.wilayah;
 
   const simpan = async () => {
-    const payload = { ...form, wilayah: getWilayahVal(), nama_layanan: form.nama_layanan || form.kota_tujuan };
+    const cleanHarga = typeof form.harga === 'string' ? Number(form.harga.replace(/\./g, '')) : Number(form.harga);
+    const payload = { ...form, harga: cleanHarga, wilayah: getWilayahVal(), nama_layanan: form.nama_layanan || form.kota_tujuan };
     if (!payload.wilayah || !payload.kota_tujuan) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Wilayah dan Kota Tujuan wajib diisi' });
     try {
       editId ? await api.put(`/harga/${editId}`, payload) : await api.post('/harga', payload);
@@ -110,7 +118,7 @@ export default function HargaPage() {
           <div className="ml-auto flex gap-2">
             <button className="btn btn-ghost btn-sm" onClick={() => { const e = {}; data?.wilayahList?.forEach(w => { e[w] = true; }); setExpanded(e); }}><ChevronUp size={14} />Buka Semua</button>
             <button className="btn btn-ghost btn-sm" onClick={() => { const e = {}; data?.wilayahList?.forEach(w => { e[w] = false; }); setExpanded(e); }}><ChevronDown size={14} />Tutup Semua</button>
-            <button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Baru', wilayah: '', wilayah_custom: '', kota_tujuan: '', kota_asal: 'Tangerang', nama_layanan: '', harga: 0, status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={14} />Tambah</button>
+            <button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Baru', wilayah: '', wilayah_custom: '', kota_tujuan: '', kota_asal: 'Jakarta', nama_layanan: '', harga: '', status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={14} />Tambah</button>
           </div>
         </div>
       </div>
@@ -150,12 +158,12 @@ export default function HargaPage() {
                     <tr key={tujuan} className="border-b border-slate-50 hover:bg-slate-50/30">
                       <td className="table-cell px-4 py-2.5 text-slate-400 text-xs">{i + 1}</td>
                       <td className="table-cell px-4 py-2.5 font-medium text-slate-800 text-sm">{tujuan}</td>
-                      <td className="px-4 py-2.5">{pair.lama ? <span className="text-slate-500 text-sm">{rupiah(pair.lama.harga)} <button className="btn btn-ghost p-0.5 align-text-bottom" onClick={() => { setEditId(pair.lama.id); const f = data.wilayahList.includes(pair.lama.wilayah); setForm({ tipe_harga: 'Lama', wilayah: f ? pair.lama.wilayah : '__custom__', wilayah_custom: f ? '' : (pair.lama.wilayah || ''), kota_tujuan: pair.lama.kota_tujuan, kota_asal: pair.lama.kota_asal || 'Tangerang', nama_layanan: pair.lama.nama_layanan, harga: Number(pair.lama.harga), status: pair.lama.status || 'Aktif', keterangan: pair.lama.keterangan || '' }); setWilayahCustom(!f && !!pair.lama.wilayah); setShowModal(true); }}><Pen size={11} /></button></span> : <button className="btn btn-secondary btn-sm py-0.5 text-xs" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Lama', wilayah, wilayah_custom: '', kota_tujuan: tujuan, kota_asal: 'Tangerang', nama_layanan: tujuan, harga: 0, status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={10} />Tambah</button>}</td>
-                      <td className="px-4 py-2.5">{pair.baru ? <span className="text-emerald-600 font-medium text-sm">{rupiah(pair.baru.harga)} <button className="btn btn-ghost p-0.5 align-text-bottom" onClick={() => { setEditId(pair.baru.id); const f = data.wilayahList.includes(pair.baru.wilayah); setForm({ tipe_harga: 'Baru', wilayah: f ? pair.baru.wilayah : '__custom__', wilayah_custom: f ? '' : (pair.baru.wilayah || ''), kota_tujuan: pair.baru.kota_tujuan, kota_asal: pair.baru.kota_asal || 'Tangerang', nama_layanan: pair.baru.nama_layanan, harga: Number(pair.baru.harga), status: pair.baru.status || 'Aktif', keterangan: pair.baru.keterangan || '' }); setWilayahCustom(!f && !!pair.baru.wilayah); setShowModal(true); }}><Pen size={11} /></button></span> : <button className="btn btn-secondary btn-sm py-0.5 text-xs" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Baru', wilayah, wilayah_custom: '', kota_tujuan: tujuan, kota_asal: 'Tangerang', nama_layanan: tujuan, harga: 0, status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={10} />Tambah</button>}</td>
+                      <td className="px-4 py-2.5">{pair.lama ? <span className="text-slate-500 text-sm">{rupiah(pair.lama.harga)} <button className="btn btn-ghost p-0.5 align-text-bottom" onClick={() => { setEditId(pair.lama.id); const f = data.wilayahList.includes(pair.lama.wilayah); setForm({ tipe_harga: 'Lama', wilayah: f ? pair.lama.wilayah : '__custom__', wilayah_custom: f ? '' : (pair.lama.wilayah || ''), kota_tujuan: pair.lama.kota_tujuan, kota_asal: pair.lama.kota_asal || 'Jakarta', nama_layanan: pair.lama.nama_layanan, harga: formatRupiahInput(pair.lama.harga), status: pair.lama.status || 'Aktif', keterangan: pair.lama.keterangan || '' }); setWilayahCustom(!f && !!pair.lama.wilayah); setShowModal(true); }}><Pen size={11} /></button></span> : <button className="btn btn-secondary btn-sm py-0.5 text-xs" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Lama', wilayah, wilayah_custom: '', kota_tujuan: tujuan, kota_asal: 'Jakarta', nama_layanan: tujuan, harga: '', status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={10} />Tambah</button>}</td>
+                      <td className="px-4 py-2.5">{pair.baru ? <span className="text-emerald-600 font-medium text-sm">{rupiah(pair.baru.harga)} <button className="btn btn-ghost p-0.5 align-text-bottom" onClick={() => { setEditId(pair.baru.id); const f = data.wilayahList.includes(pair.baru.wilayah); setForm({ tipe_harga: 'Baru', wilayah: f ? pair.baru.wilayah : '__custom__', wilayah_custom: f ? '' : (pair.baru.wilayah || ''), kota_tujuan: pair.baru.kota_tujuan, kota_asal: pair.baru.kota_asal || 'Jakarta', nama_layanan: pair.baru.nama_layanan, harga: formatRupiahInput(pair.baru.harga), status: pair.baru.status || 'Aktif', keterangan: pair.baru.keterangan || '' }); setWilayahCustom(!f && !!pair.baru.wilayah); setShowModal(true); }}><Pen size={11} /></button></span> : <button className="btn btn-secondary btn-sm py-0.5 text-xs" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Baru', wilayah, wilayah_custom: '', kota_tujuan: tujuan, kota_asal: 'Jakarta', nama_layanan: tujuan, harga: '', status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={10} />Tambah</button>}</td>
                       <td className="px-4 py-2.5">{selisih !== null ? <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${selisih > 0 ? 'bg-red-50 text-red-700 ring-1 ring-red-200' : selisih < 0 ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-slate-50 text-slate-500 ring-1 ring-slate-200'}`}>{selisih > 0 ? '+' : ''}{pct}%</span> : <span className="text-slate-300 text-xs">—</span>}</td>
                       <td className="px-4 py-2.5">{activeRow ? <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" defaultChecked={activeRow.status === 'Aktif'} onChange={e => toggleStatus(activeRow.id, e.target)} /><div className="w-9 h-5 rounded-full bg-slate-200 peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div></label> : null}</td>
                       <td className="px-4 py-2.5"><div className="flex gap-1">
-                        <button className="btn btn-ghost p-1 rounded-lg" title="Tambah" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Baru', wilayah, wilayah_custom: '', kota_tujuan: tujuan, kota_asal: 'Tangerang', nama_layanan: tujuan, harga: 0, status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={13} /></button>
+                        <button className="btn btn-ghost p-1 rounded-lg" title="Tambah" onClick={() => { setEditId(null); setForm({ tipe_harga: 'Baru', wilayah, wilayah_custom: '', kota_tujuan: tujuan, kota_asal: 'Jakarta', nama_layanan: tujuan, harga: '', status: 'Aktif', keterangan: '' }); setWilayahCustom(false); setShowModal(true); }}><Plus size={13} /></button>
                         {pair.baru ? <button className="btn btn-ghost p-1 rounded-lg text-red-400 hover:text-red-600" onClick={() => hapus(pair.baru.id, `${tujuan} (Baru)`)}><Trash2 size={13} /></button> : pair.lama ? <button className="btn btn-ghost p-1 rounded-lg text-red-400 hover:text-red-600" onClick={() => hapus(pair.lama.id, `${tujuan} (Lama)`)}><Trash2 size={13} /></button> : null}
                       </div></td>
                     </tr>
@@ -205,9 +213,9 @@ export default function HargaPage() {
             </Field>
             <div>
               <Field icon={DollarSign} label="Harga (Rp)" required>
-                <input type="number" className="input pl-12" min="0" value={form.harga} onChange={e => setForm({ ...form, harga: Number(e.target.value) })} />
+                <input type="text" className="input pl-12" placeholder="0" value={form.harga} onChange={e => setForm({ ...form, harga: formatRupiahInput(e.target.value) })} />
               </Field>
-              <p className="text-[11px] text-slate-400 mt-1">{rupiah(form.harga)}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{rupiah(typeof form.harga === 'string' ? Number(form.harga.replace(/\./g, '')) : Number(form.harga))}</p>
             </div>
             <Field icon={Tags} label="Status">
               <select className="select pl-12" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select>

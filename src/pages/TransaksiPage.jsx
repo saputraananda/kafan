@@ -6,6 +6,13 @@ import { Plus, Pen, Trash2, Eye, Truck, Calendar, User, Phone, MapPin, DollarSig
 import Modal from '../components/Modal';
 import Field from '../components/Field';
 
+const formatRupiahInput = (value) => {
+  if (value === null || value === undefined) return '';
+  const clean = String(value).replace(/\D/g, '');
+  if (!clean) return '';
+  return Number(clean).toLocaleString('id-ID');
+};
+
 export default function TransaksiPage() {
   const [data, setData] = useState([]);
   const [hargaOpt, setHargaOpt] = useState([]);
@@ -17,7 +24,7 @@ export default function TransaksiPage() {
   const [showDetail, setShowDetail] = useState(false);
   const [detail, setDetail] = useState(null);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ tanggal: new Date().toISOString().split('T')[0], nama_pasien: '', no_hp: '', pengemudi: '', alamat_penjemputan: '', tujuan: '', harga_id: '', harga_final: 0, status: 'Pending', keterangan: '' });
+  const [form, setForm] = useState({ tanggal: new Date().toISOString().split('T')[0], nama_pasien: '', no_hp: '', pengemudi: '', alamat_penjemputan: '', tujuan: '', harga_id: '', harga_final: '', status: 'Pending', keterangan: '' });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -33,13 +40,15 @@ export default function TransaksiPage() {
   const groupedHarga = {};
   hargaOpt.forEach(h => { const w = h.wilayah || 'Lainnya'; if (!groupedHarga[w]) groupedHarga[w] = []; groupedHarga[w].push(h); });
 
-  const autoFillHarga = (hargaId) => { const sel = hargaOpt.find(h => h.id === Number(hargaId)); if (sel) setForm(f => ({ ...f, harga_id: hargaId, harga_final: Number(sel.harga) })); };
+  const autoFillHarga = (hargaId) => { const sel = hargaOpt.find(h => h.id === Number(hargaId)); if (sel) setForm(f => ({ ...f, harga_id: hargaId, harga_final: formatRupiahInput(sel.harga) })); };
 
   const simpan = async () => {
     const { tanggal, nama_pasien, alamat_penjemputan, tujuan } = form;
     if (!tanggal || !nama_pasien || !alamat_penjemputan || !tujuan) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Field bertanda * wajib diisi!' });
+    const cleanHargaFinal = typeof form.harga_final === 'string' ? Number(form.harga_final.replace(/\./g, '')) : Number(form.harga_final);
+    const payload = { ...form, harga_final: cleanHargaFinal };
     try {
-      editId ? await api.put(`/transaksi/${editId}`, form) : await api.post('/transaksi', form);
+      editId ? await api.put(`/transaksi/${editId}`, payload) : await api.post('/transaksi', payload);
       Swal.fire({ icon: 'success', title: 'Berhasil!', timer: 1200, showConfirmButton: false });
       setShowForm(false); loadData();
     } catch (err) { Swal.fire({ icon: 'error', text: err.response?.data?.message || 'Gagal', confirmButtonColor: '#10b981' }); }
@@ -78,7 +87,7 @@ export default function TransaksiPage() {
             <option value="">Semua Status</option><option>Pending</option><option>Berjalan</option><option>Selesai</option><option>Dibatalkan</option>
           </select>
           <button className="btn btn-ghost btn-sm" onClick={() => { setFilterBulan(''); setFilterStatus(''); }}>Reset</button>
-          <div className="ml-auto"><button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ tanggal: new Date().toISOString().split('T')[0], nama_pasien: '', no_hp: '', pengemudi: '', alamat_penjemputan: '', tujuan: '', harga_id: '', harga_final: 0, status: 'Pending', keterangan: '' }); setShowForm(true); }}><Plus size={14} />Tambah Transaksi</button></div>
+          <div className="ml-auto"><button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ tanggal: new Date().toISOString().split('T')[0], nama_pasien: '', no_hp: '', pengemudi: '', alamat_penjemputan: '', tujuan: '', harga_id: '', harga_final: '', status: 'Pending', keterangan: '' }); setShowForm(true); }}><Plus size={14} />Tambah Transaksi</button></div>
         </div>
       </div>
 
@@ -105,7 +114,7 @@ export default function TransaksiPage() {
                   <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeClass[r.status] || 'bg-slate-50 text-slate-600'}`}>{r.status}</span></td>
                   <td className="px-4 py-3"><div className="flex gap-1">
                     <button className="btn btn-ghost p-1.5 rounded-lg" onClick={() => { setDetail(r); setShowDetail(true); }}><Eye size={14} /></button>
-                    <button className="btn btn-ghost p-1.5 rounded-lg" onClick={() => { setEditId(r.id); setForm({ tanggal: r.tanggal, nama_pasien: r.nama_pasien, no_hp: r.no_hp || '', pengemudi: r.pengemudi || '', alamat_penjemputan: r.alamat_penjemputan, tujuan: r.tujuan, harga_id: r.harga_id?.toString() || '', harga_final: Number(r.harga_final), status: r.status, keterangan: r.keterangan || '' }); setShowForm(true); }}><Pen size={14} /></button>
+                    <button className="btn btn-ghost p-1.5 rounded-lg" onClick={() => { setEditId(r.id); setForm({ tanggal: r.tanggal, nama_pasien: r.nama_pasien, no_hp: r.no_hp || '', pengemudi: r.pengemudi || '', alamat_penjemputan: r.alamat_penjemputan, tujuan: r.tujuan, harga_id: r.harga_id?.toString() || '', harga_final: formatRupiahInput(r.harga_final), status: r.status, keterangan: r.keterangan || '' }); setShowForm(true); }}><Pen size={14} /></button>
                     <button className="btn btn-ghost p-1.5 rounded-lg text-red-400 hover:text-red-600" onClick={() => hapus(r.id, r.nama_pasien)}><Trash2 size={14} /></button>
                   </div></td>
                 </tr>
@@ -149,7 +158,7 @@ export default function TransaksiPage() {
               </select>
             </Field>
             <Field icon={DollarSign} label="Harga Final (Rp)" required>
-              <input type="number" className="input pl-12" min="0" value={form.harga_final} onChange={e => setForm({ ...form, harga_final: Number(e.target.value) })} />
+              <input type="text" className="input pl-12" placeholder="0" value={form.harga_final} onChange={e => setForm({ ...form, harga_final: formatRupiahInput(e.target.value) })} />
             </Field>
             <Field icon={ToggleRight} label="Status">
               <select className="select pl-12" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>

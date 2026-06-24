@@ -6,6 +6,13 @@ import { Plus, Pen, Trash2, TrendingUp, TrendingDown, Wallet, Calendar, User, Fi
 import Modal from '../components/Modal';
 import Field from '../components/Field';
 
+const formatRupiahInput = (value) => {
+  if (value === null || value === undefined) return '';
+  const clean = String(value).replace(/\D/g, '');
+  if (!clean) return '';
+  return Number(clean).toLocaleString('id-ID');
+};
+
 export default function KeuanganPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +20,7 @@ export default function KeuanganPage() {
   const [filterPJ, setFilterPJ] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ tanggal: new Date().toISOString().split('T')[0], penanggung_jawab: '', keterangan: '', uang_masuk: 0, uang_keluar: 0 });
+  const [form, setForm] = useState({ tanggal: new Date().toISOString().split('T')[0], penanggung_jawab: '', keterangan: '', uang_masuk: '', uang_keluar: '' });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -33,9 +40,12 @@ export default function KeuanganPage() {
 
   const simpan = async () => {
     if (!form.tanggal || !form.penanggung_jawab || !form.keterangan) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Tanggal, PJ, dan keterangan wajib diisi' });
-    if (!form.uang_masuk && !form.uang_keluar) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Minimal isi uang masuk atau uang keluar' });
+    const cleanUangMasuk = typeof form.uang_masuk === 'string' ? Number(form.uang_masuk.replace(/\./g, '')) : Number(form.uang_masuk);
+    const cleanUangKeluar = typeof form.uang_keluar === 'string' ? Number(form.uang_keluar.replace(/\./g, '')) : Number(form.uang_keluar);
+    if (!cleanUangMasuk && !cleanUangKeluar) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Minimal isi uang masuk atau uang keluar' });
+    const payload = { ...form, uang_masuk: cleanUangMasuk, uang_keluar: cleanUangKeluar };
     try {
-      editId ? await api.put(`/keuangan/${editId}`, form) : await api.post('/keuangan', form);
+      editId ? await api.put(`/keuangan/${editId}`, payload) : await api.post('/keuangan', payload);
       Swal.fire({ icon: 'success', title: 'Berhasil!', timer: 1200, showConfirmButton: false });
       setShowModal(false); loadData();
     } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.message || 'Error', confirmButtonColor: '#10b981' }); }
@@ -74,7 +84,7 @@ export default function KeuanganPage() {
             <option value="">Semua PJ</option><option value="Papah">Papah</option><option value="Mamah">Mamah</option>
           </select>
           <button className="btn btn-ghost btn-sm" onClick={() => { setFilterBulan(''); setFilterPJ(''); }}>Reset</button>
-          <div className="ml-auto"><button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ tanggal: new Date().toISOString().split('T')[0], penanggung_jawab: '', keterangan: '', uang_masuk: 0, uang_keluar: 0 }); setShowModal(true); }}><Plus size={14} />Tambah Transaksi</button></div>
+          <div className="ml-auto"><button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ tanggal: new Date().toISOString().split('T')[0], penanggung_jawab: '', keterangan: '', uang_masuk: '', uang_keluar: '' }); setShowModal(true); }}><Plus size={14} />Tambah Transaksi</button></div>
         </div>
       </div>
 
@@ -98,7 +108,7 @@ export default function KeuanganPage() {
                   <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.penanggung_jawab === 'Papah' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' : 'bg-red-50 text-red-700 ring-1 ring-red-200'}`}>{r.penanggung_jawab}</span></td>
                   <td className={`table-cell px-4 py-3 font-semibold ${r.saldo_run >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{rupiah(Math.abs(r.saldo_run))}</td>
                   <td className="px-4 py-3"><div className="flex gap-1">
-                    <button className="btn btn-ghost p-1.5 rounded-lg" onClick={() => { setEditId(r.id); setForm({ tanggal: r.tanggal, penanggung_jawab: r.penanggung_jawab, keterangan: r.keterangan, uang_masuk: Number(r.uang_masuk), uang_keluar: Number(r.uang_keluar) }); setShowModal(true); }}><Pen size={14} /></button>
+                    <button className="btn btn-ghost p-1.5 rounded-lg" onClick={() => { setEditId(r.id); setForm({ tanggal: r.tanggal, penanggung_jawab: r.penanggung_jawab, keterangan: r.keterangan, uang_masuk: formatRupiahInput(r.uang_masuk), uang_keluar: formatRupiahInput(r.uang_keluar) }); setShowModal(true); }}><Pen size={14} /></button>
                     <button className="btn btn-ghost p-1.5 rounded-lg text-red-400 hover:text-red-600" onClick={() => hapus(r.id)}><Trash2 size={14} /></button>
                   </div></td>
                 </tr>
@@ -127,10 +137,10 @@ export default function KeuanganPage() {
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field icon={TrendingUp} label="Uang Masuk">
-              <input type="number" className="input pl-12" min="0" value={form.uang_masuk} onChange={e => setForm({ ...form, uang_masuk: Number(e.target.value) })} />
+              <input type="text" className="input pl-12" placeholder="0" value={form.uang_masuk} onChange={e => setForm({ ...form, uang_masuk: formatRupiahInput(e.target.value) })} />
             </Field>
             <Field icon={TrendingDown} label="Uang Keluar">
-              <input type="number" className="input pl-12" min="0" value={form.uang_keluar} onChange={e => setForm({ ...form, uang_keluar: Number(e.target.value) })} />
+              <input type="text" className="input pl-12" placeholder="0" value={form.uang_keluar} onChange={e => setForm({ ...form, uang_keluar: formatRupiahInput(e.target.value) })} />
             </Field>
           </div>
           <div className="rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs text-sky-700">Isi Uang Masuk <strong>atau</strong> Uang Keluar.</div>

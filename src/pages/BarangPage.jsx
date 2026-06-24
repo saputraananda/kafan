@@ -25,9 +25,9 @@ export default function BarangPage() {
   const [showPakai, setShowPakai] = useState(false);
   const [showRestock, setShowRestock] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ nama_barang: '', stok: 0, keterangan: '' });
-  const [pakai, setPakai] = useState({ tanggal: todayStr(), barang_id: '', jumlah: 1, keterangan: '' });
-  const [restock, setRestock] = useState({ id: '', nama: '', jumlah: 1 });
+  const [form, setForm] = useState({ nama_barang: '', stok: '', keterangan: '' });
+  const [pakai, setPakai] = useState({ tanggal: todayStr(), barang_id: '', jumlah: '', keterangan: '' });
+  const [restock, setRestock] = useState({ id: '', nama: '', jumlah: '' });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -88,8 +88,9 @@ export default function BarangPage() {
 
   const simpanBarang = async () => {
     if (!form.nama_barang) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Nama barang wajib diisi' });
+    const payload = { ...form, stok: Number(form.stok) };
     try {
-      editId ? await api.put(`/barang/${editId}`, form) : await api.post('/barang', form);
+      editId ? await api.put(`/barang/${editId}`, payload) : await api.post('/barang', payload);
       Swal.fire({ icon: 'success', title: 'Berhasil', timer: 1200, showConfirmButton: false });
       setShowBarang(false); loadData();
     } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.message || 'Error', confirmButtonColor: '#10b981' }); }
@@ -102,12 +103,13 @@ export default function BarangPage() {
 
   const catatPemakaian = async () => {
     if (!pakai.tanggal || !pakai.barang_id || !pakai.jumlah) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Semua field wajib diisi' });
+    const jml = Number(pakai.jumlah);
     const sel = barangList.find(b => b.id === Number(pakai.barang_id));
-    if (sel && pakai.jumlah > sel.stok) return Swal.fire({ icon: 'error', title: 'Stok Tidak Cukup', text: `Stok tersisa ${sel.stok}` });
+    if (sel && jml > sel.stok) return Swal.fire({ icon: 'error', title: 'Stok Tidak Cukup', text: `Stok tersisa ${sel.stok}` });
     try {
-      await api.post('/barang/pemakaian', pakai);
+      await api.post('/barang/pemakaian', { ...pakai, jumlah: jml });
       Swal.fire({ icon: 'success', title: 'Tercatat!', timer: 1200, showConfirmButton: false });
-      setShowPakai(false); setPakai({ tanggal: todayStr(), barang_id: '', jumlah: 1, keterangan: '' }); loadData();
+      setShowPakai(false); setPakai({ tanggal: todayStr(), barang_id: '', jumlah: '', keterangan: '' }); loadData();
     } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.message, confirmButtonColor: '#10b981' }); }
   };
 
@@ -117,7 +119,8 @@ export default function BarangPage() {
   };
 
   const simpanRestock = async () => {
-    try { await api.post('/barang/restock', restock); Swal.fire({ icon: 'success', title: 'Stok ditambahkan', timer: 1200, showConfirmButton: false }); setShowRestock(false); loadData(); }
+    if (!restock.jumlah) return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Jumlah wajib diisi' });
+    try { await api.post('/barang/restock', { ...restock, jumlah: Number(restock.jumlah) }); Swal.fire({ icon: 'success', title: 'Stok ditambahkan', timer: 1200, showConfirmButton: false }); setShowRestock(false); loadData(); }
     catch (err) { Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.message, confirmButtonColor: '#10b981' }); }
   };
 
@@ -153,7 +156,7 @@ export default function BarangPage() {
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
           <span className="text-sm font-semibold text-slate-800"><Package size={16} className="inline mr-2 text-emerald-600" />Daftar Barang & Stok</span>
           <div className="flex gap-2">
-            <button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ nama_barang: '', stok: 0, keterangan: '' }); setShowBarang(true); }}><Plus size={14} />Tambah Barang</button>
+            <button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setForm({ nama_barang: '', stok: '', keterangan: '' }); setShowBarang(true); }}><Plus size={14} />Tambah Barang</button>
             <button className="btn btn-secondary btn-sm" onClick={() => setShowPakai(true)}><MinusCircle size={14} />Catat Pemakaian</button>
           </div>
         </div>
@@ -186,7 +189,7 @@ export default function BarangPage() {
                   <td className="table-cell px-4 py-3 text-slate-400">{b.keterangan || '-'}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <button className="btn btn-ghost p-1.5 rounded-lg" title="Tambah Stok" onClick={() => { setRestock({ id: b.id, nama: b.nama_barang, jumlah: 1 }); setShowRestock(true); }}><PlusCircle size={14} /></button>
+                      <button className="btn btn-ghost p-1.5 rounded-lg" title="Tambah Stok" onClick={() => { setRestock({ id: b.id, nama: b.nama_barang, jumlah: '' }); setShowRestock(true); }}><PlusCircle size={14} /></button>
                       <button className="btn btn-ghost p-1.5 rounded-lg" title="Edit" onClick={() => { setEditId(b.id); setForm({ nama_barang: b.nama_barang, stok: b.stok, keterangan: b.keterangan || '' }); setShowBarang(true); }}><Pen size={14} /></button>
                       <button className="btn btn-ghost p-1.5 rounded-lg text-red-400 hover:text-red-600" title="Hapus" onClick={() => hapusBarang(b.id, b.nama_barang)}><Trash2 size={14} /></button>
                     </div>
@@ -265,7 +268,7 @@ export default function BarangPage() {
             <input className="input pl-12" value={form.nama_barang} onChange={e => setForm({ ...form, nama_barang: e.target.value })} placeholder="Contoh: Kain Kafan Putih" />
           </Field>
           <Field icon={Archive} label="Stok Awal">
-            <input type="number" className="input pl-12" min="0" value={form.stok} onChange={e => setForm({ ...form, stok: Number(e.target.value) })} />
+            <input type="number" className="input pl-12" min="0" placeholder="0" value={form.stok} onChange={e => setForm({ ...form, stok: e.target.value === '' ? '' : Number(e.target.value) })} />
           </Field>
           <Field icon={FileText} label="Keterangan">
             <input className="input pl-12" value={form.keterangan} onChange={e => setForm({ ...form, keterangan: e.target.value })} placeholder="Catatan tambahan (opsional)" />
@@ -289,7 +292,7 @@ export default function BarangPage() {
               <input type="date" className="input pl-12" value={pakai.tanggal} onChange={e => setPakai({ ...pakai, tanggal: e.target.value })} />
             </Field>
             <Field icon={Hash} label="Jumlah Dipakai" required>
-              <input type="number" className="input pl-12" min="1" value={pakai.jumlah} onChange={e => setPakai({ ...pakai, jumlah: Number(e.target.value) })} />
+              <input type="number" className="input pl-12" min="1" placeholder="1" value={pakai.jumlah} onChange={e => setPakai({ ...pakai, jumlah: e.target.value === '' ? '' : Number(e.target.value) })} />
             </Field>
           </div>
           <Field icon={Package} label="Jenis Barang" required>
@@ -318,7 +321,7 @@ export default function BarangPage() {
             <p className="text-sm font-bold text-slate-800">{restock.nama}</p>
           </div>
           <Field icon={PlusCircle} label="Jumlah Ditambahkan">
-            <input type="number" className="input pl-12 text-base font-semibold" min="1" value={restock.jumlah} onChange={e => setRestock({ ...restock, jumlah: Number(e.target.value) })} />
+            <input type="number" className="input pl-12 text-base font-semibold" min="1" placeholder="1" value={restock.jumlah} onChange={e => setRestock({ ...restock, jumlah: e.target.value === '' ? '' : Number(e.target.value) })} />
           </Field>
         </div>}
         {<>
