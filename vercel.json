@@ -1,7 +1,6 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/(.*\\.[a-zA-Z0-9]+)", "destination": "/dist/$1" },
-    { "source": "/(.*)", "destination": "/dist/index.html" }
+    { "source": "/((?!api).*)" , "destination": "/index.html" }
   ]
 }
